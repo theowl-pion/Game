@@ -1,0 +1,15 @@
+# Configuration Traefik
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    exposedByDefault: false
+
+api:
+  dashboard: true
+
+# Traefik écoute sur le port 80.
+# Se base sur Docker pour récupérer les conteneurs.
+# Permet d’accéder au dashboard de Traefik.

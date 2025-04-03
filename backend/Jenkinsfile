@@ -1,0 +1,127 @@
+pipeline {
+    agent any
+    environment {
+        sh 'HUSKY=0 npm ci'
+        NODE_VERSION = '16'
+        NODE_ENV = 'production'
+        SONARQUBE_URL = 'http://sonarqube:9000'
+        SONARQUBE_TOKEN = credentials('sonarqube-token')
+        VPS_USER = 'root'
+        VPS_HOST = '161.97.76.223'
+        REMOTE_PROJECT_PATH = '/PROJET/THETIPTOP_GAME'
+        system.debug = 'true'
+    }
+    stages {
+        stage('Checkout Code') {
+            steps {
+                script {
+                    switch (env.BRANCH_NAME) {
+                        case 'main':
+                            echo "Déploiement en Production"
+                            env.DOCKER_IMAGE = "thetiptop_game/backend:prod-${GIT_COMMIT}"
+                            break
+                        case 'preprod':
+                            echo "Déploiement en Préproduction"
+                            env.DOCKER_IMAGE = "thetiptop_game/backend:preprod-${GIT_COMMIT}"
+                            break
+                        case 'develop':
+                            echo "Déploiement en Développement"
+                            env.DOCKER_IMAGE = "thetiptop_game/backend:dev-${GIT_COMMIT}"
+                            break
+                        default:
+                            echo "Branche non prise en charge : ${env.BRANCH_NAME}"
+                            currentBuild.result = 'FAILURE'
+                            return
+                    }
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "*/${env.BRANCH_NAME}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'CleanBeforeCheckout']],
+                        userRemoteConfigs: [[url: 'https://github.com/Acharaf-Dev/THETIPTOP_GAME.git']]
+                    ])
+                }
+            }
+        }
+        stage('Install Backend Dependencies') {
+            steps {
+                script {
+                    if (fileExists('package-lock.json')) {
+                        sh 'npm ci'
+                    } else {
+                        sh 'npm install'
+                    }
+                }
+            }
+        }
+        stage('Verify Dependencies') {
+            steps {
+                sh 'npm audit'
+            }
+        }
+        stage('Run Backend Tests + Coverage') {
+            steps {
+                sh 'npm test -- --coverage --verbose'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    if (!env.SONARQUBE_TOKEN) {
+                        error("Erreur : SONARQUBE_TOKEN n'est pas défini")
+                    }
+                }
+                sh """
+                    sonar-scanner \
+                    -Dsonar.projectKey=your-project \
+                    -Dsonar.sources=. \
+                    -Dsonar.tests=./tests \
+                    -Dsonar.testExecutionReportPaths=coverage/lcov.info \
+                    -Dsonar.host.url=${SONARQUBE_URL} \
+                    -Dsonar.login=${SONARQUBE_TOKEN}
+                """
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    if (!env.DOCKER_IMAGE) {
+                        error("Erreur : DOCKER_IMAGE n'est pas défini")
+                    }
+                }
+                sh "docker build -t ${DOCKER_IMAGE} ."
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
+                    sh "docker push ${DOCKER_IMAGE}"
+                }
+            }
+        }
+        stage('Deploy on VPS') {
+            steps {
+                script {
+                    sshagent(['vps-ssh-key']) {
+                        sh """
+                            ssh ${VPS_USER}@${VPS_HOST} << 'EOF'
+                            cd ${REMOTE_PROJECT_PATH}
+                            echo "Mise à jour du backend avec la nouvelle image Docker..."
+                            docker compose pull
+                            docker compose up -d --force-recreate
+                            EOF
+                        """
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Déploiement terminé avec succès !'
+        }
+        failure {
+            echo 'Erreur dans le pipeline, vérifie les logs.'
+        }
+    }
+}
