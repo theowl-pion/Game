@@ -354,9 +354,6 @@ const AdminDashboard = () => {
             Gestion des Utilisateurs
           </h3>
           <div className="flex">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 mr-2 transition-colors">
-              Ajouter Utilisateur
-            </button>
             <select
               className="px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={selectedFilter}
