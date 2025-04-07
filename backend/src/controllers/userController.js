@@ -315,8 +315,16 @@ const updateUserController = async (req, res) => {
   try {
     // Récupérer l'utilisateur connecté (via le token)
     const loggedInUser = req.user; // Vient du middleware d'authentification
-    const { userName, email, password, phone, address, profile, userType } =
-      req.body;
+    const {
+      userName,
+      email,
+      password,
+      phone,
+      address,
+      profile,
+      userType,
+      gameAccess,
+    } = req.body;
 
     // Récupérer l'utilisateur à modifier
     const userToUpdate = await userModel.findById(req.params.id);
@@ -352,6 +360,20 @@ const updateUserController = async (req, res) => {
     if (phone) updates.phone = phone;
     if (address) updates.address = address;
     if (profile) updates.profile = profile;
+
+    // 🔹 Gestion de l'accès au jeu
+    // Seul un admin peut bloquer ou débloquer l'accès au jeu
+    if (gameAccess !== undefined) {
+      // Vérifier que l'utilisateur connecté est un admin pour modifier l'accès au jeu
+      if (loggedInUser.userType === "admin") {
+        updates.gameAccess = gameAccess;
+      } else {
+        return res.status(403).json({
+          success: false,
+          message: "Only admins can modify game access",
+        });
+      }
+    }
 
     // 🔹 Règle 4 : Vérifier si l'email est déjà utilisé par un autre utilisateur
     if (email) {

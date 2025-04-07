@@ -7,10 +7,11 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@greatsumini/react-facebook-login": "^3.4.0",
+    "@heroicons/react": "^1.0.6",
     "@mui/icons-material": "^6.4.7",
     "@mui/material": "^6.4.7",
     "@react-oauth/google": "^0.12.1",
-    "@heroicons/react": "^1.0.6",
+    "@testing-library/jest-dom": "^5.17.0",
     "axios": "^1.8.4",
     "cross-env": "^7.0.3",
     "mock-css-modules": "^2.0.0",
@@ -24,12 +25,12 @@
     "react-router-dom": "^6.30.0",
     "react-scripts": "^5.0.1",
     "react-sitemap-generator": "^1.1.6",
+    "recharts": "^2.15.2",
     "styled-components": "^6.1.16",
     "tailwind": "^4.0.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
-    "web-vitals": "^4.2.4",
-    "@testing-library/jest-dom": "^5.17.0"
+    "web-vitals": "^4.2.4"
   },
   "scripts": {
     "start": "cross-env PORT=4200 react-scripts start",

@@ -37,16 +37,11 @@ const Game = () => {
     const [prizeResult, setPrizeResult] = useState(null);
     const [showCelebration, setShowCelebration] = useState(false);
     
-    // Reset celebration when ticket number changes
-    useEffect(() => {
-      setShowCelebration(false);
-      setPrizeResult(null);
-    }, [ticketNumber]);
-
     const handlePlayGame = async (e) => {
         e.preventDefault();
         if (isLoading) return; // Prevent multiple submissions
 
+        // Reset states for a new game attempt
         setError(null);
         setPrizeResult(null);
         setShowCelebration(false);
@@ -102,6 +97,7 @@ const Game = () => {
         } finally {
             // Add a small delay before hiding loading to make it feel smoother
             setTimeout(() => setIsLoading(false), 500);
+            setTicketNumber(""); // ADDED: Clear input field regardless of success/error
         }
     };
 
@@ -156,7 +152,7 @@ const Game = () => {
 
             {/* Result Section - Appears below the form */}
             {prizeResult && !isLoading && (
-                <div className="mt-8 p-6 bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 rounded-lg shadow-xl text-center border-4 border-yellow-500 w-full max-w-sm animate-pulse">
+                <div className="mt-8 p-6 bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 rounded-lg shadow-xl text-center border-4 border-yellow-500 w-full max-w-sm">
                     <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 via-red-600 to-yellow-600 mb-2">
                         🎉 Félicitations ! 🎉
                     </p>
